@@ -5,6 +5,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { Wallet } from 'ethers';
+import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +21,13 @@ if (!TWITTER_BEARER_TOKEN || !SALT) {
   process.exit(1);
 }
 
+// Enable CORS for requests coming from your frontend (adjust the origin as needed)
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+  })
+);
+
 app.use(express.json());
 
 /**
@@ -27,7 +35,7 @@ app.use(express.json());
  * Request Body: { twitterHandle: string }
  */
 const createWalletHandler: RequestHandler = async (req, res): Promise<void> => {
-    try {
+  try {
     const { twitterHandle } = req.body;
     if (!twitterHandle) {
       res.status(400).json({ error: 'Twitter handle is required.' });
