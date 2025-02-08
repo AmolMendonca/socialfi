@@ -1,15 +1,43 @@
-import React, { useState } from 'react';
-import { Twitter, Wallet, ArrowRight, Gift, ChevronRight, DollarSign, CreditCard } from 'lucide-react';
+import { useState } from 'react';
+import { Twitter, Wallet, ArrowRight, Gift, ChevronRight } from 'lucide-react';
 
 const Home = () => {
   const [step, setStep] = useState(1);
   const [twitterHandle, setTwitterHandle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('crypto'); // 'crypto' or 'fiat'
+
+  // New function that calls the backend API
+  const handleContinue = async () => {
+    try {
+      // Remove any leading '@' from the handle if present
+      const handle = twitterHandle.startsWith('@') ? twitterHandle.slice(1) : twitterHandle;
+
+      const response = await fetch('http://localhost:5001/api/createWallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ twitterHandle: handle }),
+      });
+
+      if (!response.ok) {
+        // Handle errors (you can extend this to show a message to the user)
+        console.error('Error creating wallet:', response.statusText);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Wallet created:', data.address);
+      
+      // Continue to the next step
+      setStep(2);
+    } catch (error) {
+      console.error('Error in handleContinue:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - keeping the same */}
+      {/* Header */}
       <header className="sticky top-4 z-50 mx-auto max-w-3xl px-4">
         <div className="bg-white/70 backdrop-blur-md shadow-sm border rounded-2xl">
           <div className="h-16 flex items-center justify-between px-6">
@@ -17,7 +45,7 @@ const Home = () => {
               <div className="bg-white p-1.5 rounded-xl shadow-sm">
                 <Wallet className="w-6 h-6 text-purple-600" />
               </div>
-              <span className="text-lg font-semibold text-gray-900">CryptoOnboard</span>
+              <span className="text-lg font-semibold text-gray-900">SocialFi</span>
             </div>
             <nav className="flex items-center space-x-8">
               <button className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors">
@@ -67,103 +95,37 @@ const Home = () => {
 
             {/* Form Content */}
             <div className="p-8">
-              {step === 1 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Recipient's Twitter Handle
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Twitter className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="@username"
-                        value={twitterHandle}
-                        onChange={(e) => setTwitterHandle(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                      />
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Recipient's Twitter Handle
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <Twitter className="w-5 h-5" />
                     </div>
+                    <input
+                      type="text"
+                      placeholder="@username"
+                      value={twitterHandle}
+                      onChange={(e) => setTwitterHandle(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    />
                   </div>
-
-                  <button
-                    onClick={() => setStep(2)}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-medium transition-all flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/25 active:scale-[0.98]"
-                  >
-                    Continue
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </button>
                 </div>
-              )}
 
-              {step === 2 && (
-                <div className="space-y-6">
-                  {/* Payment Method Selection */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <button
-                      onClick={() => setPaymentMethod('crypto')}
-                      className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${
-                        paymentMethod === 'crypto' 
-                          ? 'border-purple-500 bg-purple-50' 
-                          : 'hover:border-gray-300'
-                      }`}
-                    >
-                      <Wallet className={`w-6 h-6 ${paymentMethod === 'crypto' ? 'text-purple-600' : 'text-gray-400'}`} />
-                      <span className={`text-sm font-medium ${paymentMethod === 'crypto' ? 'text-purple-600' : 'text-gray-600'}`}>
-                        Crypto
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod('fiat')}
-                      className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${
-                        paymentMethod === 'fiat' 
-                          ? 'border-purple-500 bg-purple-50' 
-                          : 'hover:border-gray-300'
-                      }`}
-                    >
-                      <CreditCard className={`w-6 h-6 ${paymentMethod === 'fiat' ? 'text-purple-600' : 'text-gray-400'}`} />
-                      <span className={`text-sm font-medium ${paymentMethod === 'fiat' ? 'text-purple-600' : 'text-gray-600'}`}>
-                        Card
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* Amount Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Amount to Send
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <DollarSign className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="number"
-                        placeholder="0.00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <span className="text-sm text-gray-500">USD</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setStep(3)}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-medium transition-all flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/25 active:scale-[0.98]"
-                  >
-                    Continue to Payment
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </button>
-                </div>
-              )}
+                <button
+                  onClick={handleContinue}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-medium transition-all flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/25 active:scale-[0.98]"
+                >
+                  Continue
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Features - keeping the same */}
+          {/* Features */}
           <div className="mt-20 grid grid-cols-3 gap-8">
             {[
               {
