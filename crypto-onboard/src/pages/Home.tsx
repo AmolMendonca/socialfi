@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Twitter, Wallet, ArrowRight, Gift, ChevronRight } from 'lucide-react';
+import { Twitter, Wallet, ArrowRight, Gift, ChevronRight, Copy, Send, Plus, ExternalLink } from 'lucide-react';
 
 const Home = () => {
   const [step, setStep] = useState(1);
   const [twitterHandle, setTwitterHandle] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  // New function that calls the backend API
   const handleContinue = async () => {
     try {
       // Remove any leading '@' from the handle if present
@@ -20,19 +21,30 @@ const Home = () => {
       });
 
       if (!response.ok) {
-        // Handle errors (you can extend this to show a message to the user)
         console.error('Error creating wallet:', response.statusText);
         return;
       }
 
       const data = await response.json();
-      console.log('Wallet created:', data.address);
-      
-      // Continue to the next step
+      setWalletAddress(data.address);
       setStep(2);
     } catch (error) {
       console.error('Error in handleContinue:', error);
     }
+  };
+
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const truncateAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
@@ -95,33 +107,88 @@ const Home = () => {
 
             {/* Form Content */}
             <div className="p-8">
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Recipient's Twitter Handle
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Twitter className="w-5 h-5" />
+              {step === 1 ? (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Recipient's Twitter Handle
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <Twitter className="w-5 h-5" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="@username"
+                        value={twitterHandle}
+                        onChange={(e) => setTwitterHandle(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="@username"
-                      value={twitterHandle}
-                      onChange={(e) => setTwitterHandle(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    />
+                  </div>
+
+                  <button
+                    onClick={handleContinue}
+                    disabled={!twitterHandle.trim()}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-medium transition-all flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Continue
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Wallet Display */}
+                  <div className="text-center">
+                    <div className="mb-4">
+                      <span className="text-sm font-medium text-gray-600">Wallet created for</span>
+                      <h3 className="text-xl font-semibold text-gray-900">{twitterHandle}</h3>
+                    </div>
+                    
+                    <div className="bg-purple-50 p-4 rounded-xl">
+                      <div className="flex items-center justify-center space-x-2">
+                        <code className="text-purple-700 font-mono">{truncateAddress(walletAddress)}</code>
+                        <button 
+                          onClick={handleCopyAddress}
+                          className="p-1.5 hover:bg-purple-100 rounded-lg transition-colors"
+                        >
+                          <Copy className="w-4 h-4 text-purple-600" />
+                        </button>
+                      </div>
+                      {copySuccess && (
+                        <span className="text-sm text-purple-600 mt-1 block">Address copied!</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <button className="flex items-center justify-center px-4 py-3 border-2 border-purple-600 text-purple-600 rounded-xl hover:bg-purple-50 transition-colors font-medium">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Funds
+                    </button>
+                    <button className="flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-medium">
+                      <Send className="w-4 h-4 mr-2" />
+                      Share Wallet
+                    </button>
+                  </div>
+
+                  {/* Additional Info */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <ExternalLink className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900">What happens next?</h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          You can now add funds to this wallet or share it with {twitterHandle}. They'll be able to access their funds using their Twitter account.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <button
-                  onClick={handleContinue}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-medium transition-all flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/25 active:scale-[0.98]"
-                >
-                  Continue
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
-              </div>
+              )}
             </div>
           </div>
 

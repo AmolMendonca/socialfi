@@ -1,5 +1,6 @@
 // server/src/index.ts
 
+// npx ts-node src/index.ts
 import express, { Request, Response, Router, RequestHandler } from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -34,6 +35,7 @@ app.use(express.json());
  * POST /api/createWallet
  * Request Body: { twitterHandle: string }
  */
+
 const createWalletHandler: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { twitterHandle } = req.body;
@@ -67,6 +69,7 @@ const createWalletHandler: RequestHandler = async (req, res): Promise<void> => {
 
     // Return the wallet address
     res.json({ address: wallet.address });
+
     return;
   } catch (error: any) {
     console.error('Error in /api/createWallet:', error.message);
